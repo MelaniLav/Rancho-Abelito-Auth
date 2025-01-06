@@ -85,15 +85,17 @@ public class SecurityConfig {
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ADMIN)));
 
             Role cocineroRole = roleRepository.findByRoleName(AppRole.ROLE_COCINERO)
-                    .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_COORDINADOR)));
+                    .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_COCINERO)));
 
             Role coordinadorRole = roleRepository.findByRoleName(AppRole.ROLE_COORDINADOR)
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_COORDINADOR)));
 
             Role asistenteVentaRole = roleRepository.findByRoleName(AppRole.ROLE_ASISTENTE_VENTA)
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ASISTENTE_VENTA)));
+
             Role transportistaRole = roleRepository.findByRoleName(AppRole.ROLE_TRANSPORTISTA)
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_TRANSPORTISTA)));
+
             Role asistenteEntregaRole = roleRepository.findByRoleName(AppRole.ROLE_ASISTENTE_ENTREGA)
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ASISTENTE_ENTREGA)));
 

@@ -10,6 +10,7 @@ import com.elranchoabelito.auth.models.entities.User;
 import com.elranchoabelito.auth.repositories.RoleRepository;
 import com.elranchoabelito.auth.repositories.UserRepository;
 import com.elranchoabelito.auth.security.jwt.JwtUtils;
+import com.elranchoabelito.auth.services.IRegisterService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+
+
     @Autowired
     private AuthenticationManager authenticationManager;
 
@@ -47,16 +50,7 @@ public class AuthController {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PasswordEncoder encoder;
-
-    private final Logger log = LoggerFactory.getLogger(AuthController.class);
-
+    private IRegisterService registerService;
 
     @PostMapping("/public/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
@@ -90,57 +84,11 @@ public class AuthController {
 
 
     @PostMapping(value = "/public/signup", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest) {
-        log.info("Signup request received: {}", signupRequest);
+    public ResponseEntity<MessageResponse>  registerUser(@Valid @RequestBody SignupRequest signupRequest) {
+        MessageResponse messageResponse = registerService.registerUser(signupRequest);
 
-        if (userRepository.existsByUserName(signupRequest.getUsername())) {
-            log.warn("Username already exists: {}", signupRequest.getUsername());
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken!"));
-        }
-
-        if (userRepository.existsByEmail(signupRequest.getEmail())) {
-            log.warn("Email already exists: {}", signupRequest.getEmail());
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
-        }
-
-        log.info("Creating new user...");
-        User user = new User(
-                signupRequest.getEmail(), signupRequest.getUsername(),
-                encoder.encode(signupRequest.getPassword()));
-
-        log.info("Assigning roles...");
-        Set<String> strRoles = signupRequest.getRole();
-        Role role;
-        if (strRoles == null || strRoles.isEmpty()) {
-            role = roleRepository.findByRoleName(AppRole.ROLE_CLIENTE)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-        } else {
-            String roleStr = strRoles.iterator().next();
-            if (roleStr.equals("admin")) {
-                role = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
-                        .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            } else {
-                role = roleRepository.findByRoleName(AppRole.ROLE_CLIENTE)
-                        .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            }
-
-            user.setAccountNonLocked(true);
-            user.setAccountNonExpired(true);
-            user.setCredentialsNonExpired(true);
-            user.setEnable(true);
-            user.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-            user.setAccountExpiryDate(LocalDate.now().plusYears(1));
-            user.setTwoFactorEnabled(false);
-            user.setSignUpMethod("email");
-        }
-        log.info("Ya vamos a guardar ... {}", user.getIdUser());
-        user.setRole(role);
-        log.info("Le asigno este rol ... {}", user.getRole().getRoleName());
-        log.info("El enable del orto... {}", user.isEnable());
-        userRepository.save(user);
-        log.info("User registered successfully: {}", user.getUserName());
-
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+        HttpStatus status = messageResponse.getStatus().equals("success") ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
+        return new ResponseEntity<>(messageResponse, status);
     }
 
 }

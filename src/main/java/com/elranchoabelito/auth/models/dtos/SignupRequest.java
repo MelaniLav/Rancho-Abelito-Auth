@@ -19,5 +19,7 @@ public class SignupRequest {
     @Getter
     private Set<String> role;
 
+    private ClienteData clienteData;
+
 
 }
